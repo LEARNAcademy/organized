@@ -63,7 +63,6 @@ class CodeBlock
     # Java files need a particular name, extract that
     tmpDir = tmp.dirSync()
     dirname = tmpDir.name
-    console.log("Dir: #{dirname}")
     if @language is 'java'
       if match = code.match(/public\s+class\s+(\S+)/)
         filename = dirname + "/" + match[1] + ".java"
@@ -81,7 +80,6 @@ class CodeBlock
       filename = tmp.tmpNameSync({dir: dirname}) + ".m"
     else
       filename = tmp.tmpNameSync({dir: dirname})
-    console.log("Filename: #{filename}")
     removeCallback = () =>
       #spawn("rm", ['-r', dirname])
 
@@ -112,9 +110,15 @@ class CodeBlock
     # piping multiple lines to some execution engines
 
   executionEngine: () ->
+    filePath = atom.workspace.getActiveTextEditor()?.getPath()
+    directory = path.dirname(filePath)
+    console.log "THIW IS DSFSDFSDFFD"
+
     switch @language
       when 'bash' then return (pathToFile, resultBlock) ->
-        return spawn('bash', [pathToFile])
+        return spawn('bash', [pathToFile], {cwd: directory})
+      when 'psql' then return (pathToFile, resultBlock) ->
+        return spawn('psql', [pathToFile], {cwd: directory})
 
       when 'c' then return (pathToFile, resultBlock) ->
         if match = pathToFile.match(/^(.*)\/[^/]+$/)
@@ -126,7 +130,7 @@ class CodeBlock
             resultBlock.addError(ccProcess.stderr)
             return null
           else
-            return spawn(outputFile)
+            return spawn(outputFile, [], {cwd: directory})
 
       when 'coffee' then return (pathToFile, resultBlock) ->
         return spawn('coffee', [pathToFile])
@@ -141,7 +145,7 @@ class CodeBlock
             resultBlock.addError(cppProcess.stderr)
             return null
           else
-            return spawn(outputFile)
+            return spawn(outputFile, [], {cwd: directory})
 
       # I can't figure out how the 'or' syntax works in coffeescript, I'll just leave two copies for now
       # because they are short.
@@ -161,16 +165,16 @@ class CodeBlock
             resultBlock.addError(javacProcess.stderr)
             return null
           else
-            return spawn('java', ['-cp', dirName, className])
+            return spawn('java', ['-cp', dirName, className], {cwd: directory})
         else
           atom.notifications.addError("Cannot find Java class name")
           return null
 
       when 'javascript' then return (pathToFile, resultBlock) ->
-        return spawn('node', [pathToFile])
+        return spawn('node', [pathToFile], {cwd: directory})
 
       when 'js' then return (pathToFile, resultBlock) ->
-        return spawn('node', [pathToFile])
+        return spawn('node', [pathToFile], {cwd: directory})
 
       when 'objc' then return (pathToFile, resultBlock) ->
         if match = pathToFile.match(/^(.*)\/[^/]+$/)
@@ -182,22 +186,22 @@ class CodeBlock
             resultBlock.addError(ccProcess.stderr)
             return null
           else
-            return spawn(outputFile)
+            return spawn(outputFile, [], {cwd: directory})
 
       when 'perl' then return (pathToFile, resultBlock) ->
-        return spawn('perl', [pathToFile])
+        return spawn('perl', [pathToFile], {cwd: directory})
 
       when 'php' then return (pathToFile, resultBlock) ->
-        return spawn('php', [pathToFile])
+        return spawn('php', [pathToFile], {cwd: directory})
 
       when 'python' then return (pathToFile, resultBlock) ->
-          return spawn('python', [pathToFile])
+          return spawn('python', [pathToFile], {cwd: directory})
 
       when 'r' then return (pathToFile, resultBlock) ->
-          return spawn('Rscript', [pathToFile])
+          return spawn('Rscript', [pathToFile], {cwd: directory})
 
       when 'shell' then return (pathToFile, resultBlock) ->
-        return spawn('sh', [pathToFile])
+        return spawn('sh', [pathToFile], {cwd: directory})
 
       else return null
 
@@ -268,7 +272,7 @@ class ResultBlock
       row += 1
 
     if lastRow >= 0
-      console.log("Clearing from #{@resultRow+1} to #{lastRow}")
+      console.log("Clearing it out from #{@resultRow+1} to #{lastRow}")
       @editor.setTextInBufferRange([[@resultRow+1, 0],[lastRow+1, 0]], "")
 
 module.exports = CodeBlock
