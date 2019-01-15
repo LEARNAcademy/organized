@@ -19,7 +19,6 @@ class CodeBlock
   constructor: (currentRow, editor = atom.workspace.getActiveTextEditor()) ->
     @editor = editor
     @psqlConfig = @psqlSetup(currentRow)
-    console.log("CONFIG", @psqlConfig)
 
     #Work backward to find start
     row = currentRow
@@ -139,6 +138,8 @@ class CodeBlock
     switch @language
       when 'bash' then return (pathToFile, resultBlock) ->
         return spawn('bash', [pathToFile], {cwd: directory})
+      when 'rails' then return (pathToFile, resultBlock) ->
+        return exec("bin/rails runner #{pathToFile}", {cwd: directory})
       when 'psql' then return ((pathToFile, resultBlock) ->
         commandParts = [
           "psql",
